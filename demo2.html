@@ -7,7 +7,12 @@
 		<script type="module">
 			import ReportSameReferrer from './dist/ReportSameReferrer.js';
 
-			const reportSameReferrer = new ReportSameReferrer('https://w0s.jp/report/referrer', {
+			const reportSameReferrer = new ReportSameReferrer('https://report.w0s.jp/referrer-sample', {
+				fetchParam: {
+					location: 'location',
+					referrer: 'referrer',
+				},
+				fetchContentType: 'application/json',
 				fetchHeaders: {
 					'X-Requested-With': 'fetch',
 				},
