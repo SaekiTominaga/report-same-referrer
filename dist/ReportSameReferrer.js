@@ -18,11 +18,11 @@ var _endpoint, _option;
 export default class {
     /**
      * @param {string} endpoint - URL of the endpoint
-     * @param {referrerErrorFetchOption} option - Information such as transmission conditions
+     * @param {Option} option - Information such as transmission conditions
      */
     constructor(endpoint, option = {}) {
-        _endpoint.set(this, void 0); // エンドポイントの URL
-        _option.set(this, void 0);
+        _endpoint.set(this, void 0); // URL of the endpoint
+        _option.set(this, void 0); // Information such as transmission conditions
         __classPrivateFieldSet(this, _endpoint, endpoint);
         if (option.fetchParam === undefined) {
             option.fetchParam = {
@@ -43,7 +43,7 @@ export default class {
         if (referrer === '') {
             return;
         }
-        if (!this._checkUserAgent()) {
+        if (!this.checkUserAgent()) {
             return;
         }
         const referrerUrl = new URL(referrer);
@@ -69,14 +69,14 @@ export default class {
             default:
                 throw new Error('An invalid value was specified for the argument `condition`.');
         }
-        this._report(referrerUrl);
+        this.report(referrerUrl);
     }
     /**
      * ユーザーエージェントがレポートを行う対象かどうかチェックする
      *
      * @returns {boolean} 対象なら true
      */
-    _checkUserAgent() {
+    checkUserAgent() {
         const ua = navigator.userAgent;
         const denyUAs = __classPrivateFieldGet(this, _option).denyUAs;
         if (denyUAs !== undefined && denyUAs.some((denyUA) => denyUA.test(ua))) {
@@ -93,17 +93,23 @@ export default class {
     /**
      * レポートを行う
      *
-     * @param {URL} referrerUrl - リファラーのURL
+     * @param {object} referrerUrl - リファラーのURL
      */
-    async _report(referrerUrl) {
+    async report(referrerUrl) {
         const fetchParam = __classPrivateFieldGet(this, _option).fetchParam;
         const formData = new FormData();
         formData.append(fetchParam.location, location.toString());
         formData.append(fetchParam.referrer, referrerUrl.toString());
+        const contentType = __classPrivateFieldGet(this, _option).fetchContentType;
+        const fetchHeaders = new Headers(__classPrivateFieldGet(this, _option).fetchHeaders);
+        if (contentType !== undefined) {
+            fetchHeaders.set('Content-Type', contentType);
+        }
+        const fetchBody = contentType === 'application/json' ? JSON.stringify(Object.fromEntries(formData)) : new URLSearchParams([...formData]);
         const response = await fetch(__classPrivateFieldGet(this, _endpoint), {
             method: 'POST',
-            headers: __classPrivateFieldGet(this, _option).fetchHeaders,
-            body: new URLSearchParams([...formData]),
+            headers: fetchHeaders,
+            body: fetchBody,
         });
         if (!response.ok) {
             throw new Error(`"${response.url}" is ${response.status} ${response.statusText}`);

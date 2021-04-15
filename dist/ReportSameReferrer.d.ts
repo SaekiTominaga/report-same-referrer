@@ -1,12 +1,14 @@
-declare type referrerErrorCondition = 'origin' | 'host' | 'hostname';
-interface referrerErrorFetchParam {
+declare type condition = 'origin' | 'host' | 'hostname';
+interface FetchParam {
     location: string;
     referrer: string;
 }
-interface referrerErrorFetchOption {
-    fetchParam?: referrerErrorFetchParam;
+declare type fetchContentType = 'application/x-www-form-urlencoded' | 'application/json';
+interface Option {
+    fetchParam?: FetchParam;
+    fetchContentType?: fetchContentType;
     fetchHeaders?: HeadersInit;
-    condition?: referrerErrorCondition;
+    condition?: condition;
     denyUAs?: RegExp[];
     allowUAs?: RegExp[];
 }
@@ -17,9 +19,9 @@ export default class {
     #private;
     /**
      * @param {string} endpoint - URL of the endpoint
-     * @param {referrerErrorFetchOption} option - Information such as transmission conditions
+     * @param {Option} option - Information such as transmission conditions
      */
-    constructor(endpoint: string, option?: referrerErrorFetchOption);
+    constructor(endpoint: string, option?: Option);
     /**
      * Initial processing
      */
@@ -29,13 +31,13 @@ export default class {
      *
      * @returns {boolean} 対象なら true
      */
-    private _checkUserAgent;
+    private checkUserAgent;
     /**
      * レポートを行う
      *
-     * @param {URL} referrerUrl - リファラーのURL
+     * @param {object} referrerUrl - リファラーのURL
      */
-    private _report;
+    private report;
 }
 export {};
 //# sourceMappingURL=ReportSameReferrer.d.ts.map

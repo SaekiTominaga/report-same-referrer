@@ -1,14 +1,17 @@
-type referrerErrorCondition = 'origin' | 'host' | 'hostname';
+type condition = 'origin' | 'host' | 'hostname';
 
-interface referrerErrorFetchParam {
+interface FetchParam {
 	location: string; // Field name when sending `location` to an endpoint.
 	referrer: string; // Field name when sending `document.referrer` to an endpoint.
 }
 
-interface referrerErrorFetchOption {
-	fetchParam?: referrerErrorFetchParam;
+type fetchContentType = 'application/x-www-form-urlencoded' | 'application/json';
+
+interface Option {
+	fetchParam?: FetchParam;
+	fetchContentType?: fetchContentType; // `Content-Type` header to be set in `fetch()` request.
 	fetchHeaders?: HeadersInit; // Header to add to the `fetch()` request. <https://fetch.spec.whatwg.org/#typedefdef-headersinit>
-	condition?: referrerErrorCondition; // Which parts of the referrer to check.
+	condition?: condition; // Which parts of the referrer to check.
 	denyUAs?: RegExp[]; // If a user agent matches this regular expression, do not send report.
 	allowUAs?: RegExp[]; // If a user agent matches this regular expression, send report.
 }
@@ -17,14 +20,14 @@ interface referrerErrorFetchOption {
  * Send referrer error information to endpoints.
  */
 export default class {
-	#endpoint: string; // エンドポイントの URL
-	#option: referrerErrorFetchOption;
+	#endpoint: string; // URL of the endpoint
+	#option: Option; // Information such as transmission conditions
 
 	/**
 	 * @param {string} endpoint - URL of the endpoint
-	 * @param {referrerErrorFetchOption} option - Information such as transmission conditions
+	 * @param {Option} option - Information such as transmission conditions
 	 */
-	constructor(endpoint: string, option: referrerErrorFetchOption = {}) {
+	constructor(endpoint: string, option: Option = {}) {
 		this.#endpoint = endpoint;
 
 		if (option.fetchParam === undefined) {
@@ -48,7 +51,7 @@ export default class {
 			return;
 		}
 
-		if (!this._checkUserAgent()) {
+		if (!this.checkUserAgent()) {
 			return;
 		}
 
@@ -77,7 +80,7 @@ export default class {
 				throw new Error('An invalid value was specified for the argument `condition`.');
 		}
 
-		this._report(referrerUrl);
+		this.report(referrerUrl);
 	}
 
 	/**
@@ -85,7 +88,7 @@ export default class {
 	 *
 	 * @returns {boolean} 対象なら true
 	 */
-	private _checkUserAgent(): boolean {
+	private checkUserAgent(): boolean {
 		const ua = navigator.userAgent;
 
 		const denyUAs = this.#option.denyUAs;
@@ -105,20 +108,31 @@ export default class {
 	/**
 	 * レポートを行う
 	 *
-	 * @param {URL} referrerUrl - リファラーのURL
+	 * @param {object} referrerUrl - リファラーのURL
 	 */
-	private async _report(referrerUrl: URL): Promise<void> {
-		const fetchParam = <referrerErrorFetchParam>this.#option.fetchParam;
+	private async report(referrerUrl: URL): Promise<void> {
+		const fetchParam = <FetchParam>this.#option.fetchParam;
 
 		const formData = new FormData();
 		formData.append(fetchParam.location, location.toString());
 		formData.append(fetchParam.referrer, referrerUrl.toString());
 
+		const contentType = this.#option.fetchContentType;
+
+		const fetchHeaders = new Headers(this.#option.fetchHeaders);
+		if (contentType !== undefined) {
+			fetchHeaders.set('Content-Type', contentType);
+		}
+
+		const fetchBody: BodyInit =
+			contentType === 'application/json' ? JSON.stringify(Object.fromEntries(formData)) : new URLSearchParams(<string[][]>[...formData]);
+
 		const response = await fetch(this.#endpoint, {
 			method: 'POST',
-			headers: this.#option.fetchHeaders,
-			body: new URLSearchParams(<string[][]>[...formData]),
+			headers: fetchHeaders,
+			body: fetchBody,
 		});
+
 		if (!response.ok) {
 			throw new Error(`"${response.url}" is ${response.status} ${response.statusText}`);
 		}

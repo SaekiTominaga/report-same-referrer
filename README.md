@@ -16,15 +16,16 @@ As a practical use case, this script put this script in error pages like 403, 40
 import ReportSameReferrer from '@saekitominaga/report-same-referrer';
 
 const reportSameReferrer = new ReportSameReferrer('https://report.example.com/referrer', {
-  'fetchParam': {
+  fetchParam: {
     location: 'loc',
     referrer: 'ref',
   },
-  'fetchHeaders': {
+  fetchContentType: 'application/json',
+  fetchHeaders: {
     'X-Requested-With': 'hoge',
   },
-  'condition': 'origin',
-  'denyUAs': [
+  condition: 'origin',
+  denyUAs: [
     /Googlebot\/2.1;/,
   ],
 });
@@ -39,6 +40,7 @@ new ReportSameReferrer(endpoint: string, option: {
     location: string; // Field name when sending `location` to an endpoint. The default value when omitted is `location`. (e.g. location=https%3A%2F%2Fexample.com%2Fpath%2Fto&referrer=(omit) )
     referrer: string; // Field name when sending `document.referrer` to an endpoint. The default value when omitted is `referrer`. (e.g. location=(omit)&referrer=https%3A%2F%2Fexternal.example.net%2Fpath%2Fto )
   },
+  fetchContentType?: fetchContentType; // `Content-Type` header to be set in `fetch()` request. ('application/x-www-form-urlencoded' or 'application/json')
   condition?: 'origin' | 'host' | 'hostname'; // Which parts of the referrer to check. The default value when omitted is `origin`.
   denyUAs?: RegExp[]; // If a user agent matches this regular expression, do not send report.
   allowUAs?: RegExp[]; // If a user agent matches this regular expression, send report.
@@ -49,9 +51,9 @@ new ReportSameReferrer(endpoint: string, option: {
 ### Parameters
 
 <dl>
-<dt>endpoint [required]</dt>
+<dt><code>endpoint</code> [required]</dt>
 <dd>URL of the endpoint</dd>
-<dt>option [optional]</dt>
+<dt><code>option</code> [optional]</dt>
 <dd>Information such as transmission conditions</dd>
 </dl>
 
